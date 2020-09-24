@@ -23,6 +23,7 @@ client.connect(err => {
   app.get('/campsites',(req,res)=>{
     campsites.find().toArray((err,result)=>{
       if(err) console.log(err)
+      console.log('yep')
       res.send(result)
     })
   })
@@ -56,19 +57,22 @@ client.connect(err => {
   }
   
   app.post('/comments', async (req,res) => {
-    const {campsiteId,rating,text,author} = req.body
-    if(campsiteId && rating && text && author){
+    const values= req.body
+    const {campsiteId,rating,author,text,date} = values
+    console.log('comment post',campsiteId,rating,text,author,date)
+    if(campsiteId !== undefined && rating && text && author && date){
       try {
         const commentCount = await comments.countDocuments()
         const commentDetails = {
-          id:commentCount,campsiteId,rating,text,author,data:new Date()
+          id:commentCount,campsiteId,rating,text,author,date
         }
         const response = await comments.insertOne(commentDetails)
+        console.log(response)
         clearTimeout(commentTimeout)
-        setTimeout(()=>removeComments(),1000 * 60 * 15)
-        res.send(response)
-        
+        setTimeout(()=>removeComments(),1000*16*60)
+        res.send(response)        
       } catch (error) {
+        console.log(error)
         res.send(error.message)
       }
     }
