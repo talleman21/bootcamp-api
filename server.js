@@ -1,10 +1,14 @@
+require('dotenv').config()
+
 const express = require('express')
 const app = express()
 
 app.use(express.json())
+app.use(express.static('public'))
 
 const MongoClient = require('mongodb').MongoClient;
-const uri = "mongodb+srv://talleman21:InsleeSucks@cluster0-oqyjy.mongodb.net/nucamp?retryWrites=true&w=majority";
+const uri = process.env.DB_CONFIG
+//"mongodb+srv://talleman21:InsleeSucks@cluster0-oqyjy.mongodb.net/nucamp?retryWrites=true&w=majority";
 const client = new MongoClient(uri, { useNewUrlParser: true,useUnifiedTopology:true });
 client.connect(err => {
   if(err) console.log(err)
