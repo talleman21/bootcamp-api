@@ -1,28 +1,31 @@
 require('dotenv').config()
 
+const Ddos = require('ddos')
 const express = require('express')
+const ddos = new Ddos({burst:10,limit:15})
 const app = express()
 const cors = require('cors')
 
+app.use(ddos.express)
 app.use(cors())
 app.use(express.json())
-app.use(express.static('public'))
+app.use('/bootcamp-api',express.static('public'))
 
 const MongoClient = require('mongodb').MongoClient;
 const uri = process.env.DB_CONFIG
-//"mongodb+srv://talleman21:InsleeSucks@cluster0-oqyjy.mongodb.net/nucamp?retryWrites=true&w=majority";
 const client = new MongoClient(uri, { useNewUrlParser: true,useUnifiedTopology:true });
 client.connect(err => {
   if(err) console.log(err)
+  console.log('connect')
   const campsites = client.db('nucamp').collection('campsites');
   const comments = client.db('nucamp').collection('comments');
   const partners = client.db('nucamp').collection('partners');
   const promotions = client.db('nucamp').collection('promotions');
-  const feedback = client.db('nucamp').collection('feedback');
+  const feedBack = client.db('nucamp').collection('feedback');
   // perform actions on the collection object
 
   
-  app.get('/campsites',(req,res)=>{
+  app.get('/bootcamp-api/campsites',(req,res)=>{
     campsites.find().toArray((err,result)=>{
       if(err) console.log(err)
       console.log('yep')
@@ -30,21 +33,21 @@ client.connect(err => {
     })
   })
   
-  app.get('/campsites/:id',(req,res)=>{
+  app.get('/bootcamp-api/campsites/:id',(req,res)=>{
     campsites.findOne({id:+req.params.id},(err,result)=>{
       if(err) console.log(err)
       res.send(result)
     })
   })
 
-  app.get('/comments',(req,res)=>{
+  app.get('/bootcamp-api/comments',(req,res)=>{
     comments.find().toArray((err,result)=>{
       if(err) console.log(err)
       res.send(result)
     })
   })
 
-  app.get('/comments/:id',(req,res)=>{
+  app.get('/bootcamp-api/comments/:id',(req,res)=>{
     comments.findOne({id:+req.params.id},(err,result)=>{
       if(err) console.log(err)
       res.send(result)
@@ -58,21 +61,21 @@ client.connect(err => {
     console.log('comments removed')
   }
   
-  app.post('/comments', async (req,res) => {
+  app.post('/bootcamp-api/comments', async (req,res) => {
     const values= req.body
     const {campsiteId,rating,author,text,date} = values
     console.log('comment post',campsiteId,rating,text,author,date)
-    if(campsiteId !== undefined && rating && text && author && date){
+    if(campsiteId !== undefined && text && author && date){
       try {
         const commentCount = await comments.countDocuments()
         const commentDetails = {
-          id:commentCount,campsiteId,rating,text,author,date
+          id:commentCount,campsiteId,rating:rating||1,text,author,date
         }
         const response = await comments.insertOne(commentDetails)
         console.log(response)
         clearTimeout(commentTimeout)
         setTimeout(()=>removeComments(),1000*16*60)
-        res.send(response)        
+        res.send(commentDetails)        
       } catch (error) {
         console.log(error)
         res.send(error.message)
@@ -80,42 +83,42 @@ client.connect(err => {
     }
   })
 
-  app.get('/partners',(req,res)=>{
+  app.get('/bootcamp-api/partners',(req,res)=>{
     partners.find().toArray((err,result)=>{
       if(err) console.log(err)
       res.send(result)
     })
   })
 
-  app.get('/partners/:id',(req,res)=>{
+  app.get('/bootcamp-api/partners/:id',(req,res)=>{
     partners.findOne({id:+req.params.id},(err,result)=>{
       if(err) console.log(err)
       res.send(result)
     })
   })
 
-  app.get('/promotions',(req,res)=>{
+  app.get('/bootcamp-api/promotions',(req,res)=>{
     promotions.find().toArray((err,result)=>{
       if(err) console.log(err)
       res.send(result)
     })
   })
 
-  app.get('/promotions/:id',(req,res)=>{
+  app.get('/bootcamp-api/promotions/:id',(req,res)=>{
     promotions.findOne({id:+req.params.id},(err,result)=>{
       if(err) console.log(err)
       res.send(result)
     })
   })
 
-  app.get('/feedback',(req,res)=>{
-    feedback.find().toArray((err,result)=>{
+  app.get('/bootcamp-api/feedback',(req,res)=>{
+    feedBack.find().toArray((err,result)=>{
       if(err) console.log(err)
       res.send(result)
     })
   })
 
-  app.get('/feedback/:id',(req,res)=>{
+  app.get('/bootcamp-api/feedback/:id',(req,res)=>{
     feedback.findOne({id:+req.params.id},(err,result)=>{
       if(err) console.log(err)
       res.send(result)
@@ -129,25 +132,33 @@ client.connect(err => {
     console.log('feedbacks removed')
   }
 
-  app.post('/feedback', async (req,res)=>{
-    const {firstname,lastname,telnum,email,agree,contactType,message} = req.body
-    if(firstname,lastname,telnum,email,agree,contactType,message){
+  app.post('/bootcamp-api/feedback', async (req,res)=>{
+    console.log('post feedback')
+    console.log('user',req.body)
+  
+    const {firstName,lastName,phoneNum,email,agree,contactType,feedback} = req.body
+    console.log(firstName,lastName)
+    if(firstName,lastName){
+      
       try {
-        const feedbackCount = await feedback.countDocuments()
+        const feedbackCount = await feedBack.countDocuments()
         console.log('count:' ,feedbackCount)
-        const feedbackInfo = {id:feedbackCount,firstname,lastname,telnum,email,agree,contactType,message,date:new Date()}
-        const response = await feedback.insertOne(feedbackInfo)
+        const feedbackInfo = {id:feedbackCount,firstName,lastName,phoneNum,email,agree,contactType,feedback,date:new Date()}
+        const response = await feedBack.insertOne(feedbackInfo)
         clearTimeout(feedbackRemoveTimer)
         feedbackRemoveTimer = setTimeout(() => removeFeedbacks(), 1000 * 60 * 15)
-        res.send(response.ops)        
+        console.log('psted')
+        res.send(feedbackInfo)        
       } catch (error) {
         res.status(500).send(error.message)
         console.log(error.message)
       }
+    }else{
+      res.send('err')
     }
   })
 
-  app.delete('/feedback', async (req,res) => {
+  app.delete('/bootcamp-api/feedback', async (req,res) => {
     try {
       const response = await feedback.deleteMany({id:{$ne:0}})
       res.send(response)
@@ -156,7 +167,7 @@ client.connect(err => {
     }
   })
 
-  app.delete('/feedback/:id', async (req,res) => {
+  app.delete('/bootcamp-api/feedback/:id', async (req,res) => {
     try {
       const deleteFeedback = await feedback.deleteOne({id:parseInt(req.params.id)})
       res.send(deleteFeedback)
@@ -172,6 +183,6 @@ client.connect(err => {
 
 
 
-app.listen(5001,()=>{
-  console.log('server started on port 5001')
+app.listen(5050,()=>{
+  console.log('server started on port 5050')
 })
