@@ -128,7 +128,7 @@ client.connect(err => {
   let feedbackRemoveTimer 
 
   const removeFeedbacks = async () => {
-    const response = await feedback.deleteMany({id:{$ne:0}})
+    const response = await feedBack.deleteMany({id:{$ne:0}})
     console.log('feedbacks removed')
   }
 
@@ -143,7 +143,7 @@ client.connect(err => {
       try {
         const feedbackCount = await feedBack.countDocuments()
         console.log('count:' ,feedbackCount)
-        const feedbackInfo = {id:feedbackCount,firstName,lastName,phoneNum,email,agree,contactType,feedback,date:new Date()}
+        const feedbackInfo = {id:feedbackCount,firstname:firstName,lastname:lastName,telNum:phoneNum,email,agree,contactType,message:feedback,date:new Date()}
         const response = await feedBack.insertOne(feedbackInfo)
         clearTimeout(feedbackRemoveTimer)
         feedbackRemoveTimer = setTimeout(() => removeFeedbacks(), 1000 * 60 * 15)
