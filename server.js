@@ -10,6 +10,7 @@ app.use(ddos.express)
 app.use(cors())
 app.use(express.json())
 app.use('/bootcamp-api',express.static('public'))
+app.use('/bootcamp-api',express.static('client/build'))
 
 const MongoClient = require('mongodb').MongoClient;
 const uri = process.env.DB_CONFIG
@@ -119,7 +120,7 @@ client.connect(err => {
   })
 
   app.get('/bootcamp-api/feedback/:id',(req,res)=>{
-    feedback.findOne({id:+req.params.id},(err,result)=>{
+    feedBack.findOne({id:+req.params.id},(err,result)=>{
       if(err) console.log(err)
       res.send(result)
     })
